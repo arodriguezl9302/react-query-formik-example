@@ -1,10 +1,14 @@
 import React from "react";
+import { useAuthStore } from "./store";
 import { useMutation } from "react-query";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { authLogin } from "./apiAuth";
 
 function Login() {
+  const token = useAuthStore((state) => state.token);
+  const setToken = useAuthStore((state) => state.setToken);
+  const tokelocal = localStorage.getItem("auth");
   const { mutate, isLoading, error, isError } = useMutation("login", authLogin);
 
   const formik = useFormik({
@@ -22,15 +26,26 @@ function Login() {
     }),
     onSubmit: async (values) => {
       //console.log(values);
-      mutate({
-        email: values.email,
-        password: values.password,
-      });
+      mutate(
+        {
+          email: values.email,
+          password: values.password,
+        },
+        {
+          onSuccess: (data) => {
+            setToken(data.jwtToken);
+          },
+          onError: (error) => {
+            alert(error.response.data.message);
+          },
+        }
+      );
     },
   });
 
   return (
     <form onSubmit={formik.handleSubmit}>
+      {useAuthStore.getState().token}
       <input
         type="text"
         name="email"
